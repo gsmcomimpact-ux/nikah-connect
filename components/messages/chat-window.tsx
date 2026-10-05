@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { ReportDialog } from "@/components/profile/report-dialog";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/client/compress-image";
 
 export type ChatMessage = { id: string; senderId: string | null; body: string; createdAt: string; hidden: boolean; attachments: string[] };
 
@@ -89,9 +90,9 @@ export function ChatWindow({
   }
 
   function sendImage(file: File) {
-    const fd = new FormData();
-    fd.set("file", file);
     start(async () => {
+      const fd = new FormData();
+      fd.set("file", await compressImage(file, 1280));
       const res = await sendAttachmentAction(conversationId, fd);
       if (res.ok) await refresh();
       else setError(res.error);

@@ -87,7 +87,7 @@ export async function submitIdentityAction(_prev: FormState, fd: FormData): Prom
   for (const key of ["document", "selfie"]) {
     const f = fd.get(key);
     if (!(f instanceof File) || f.size === 0) return { ok: false, errors: { [key]: ["Fichier requis"] } };
-    if (f.size > MAX_DOCUMENT_BYTES) return { ok: false, errors: { [key]: ["Fichier trop volumineux (8 Mo maximum)"] } };
+    if (f.size > MAX_DOCUMENT_BYTES) return { ok: false, errors: { [key]: ["Fichier trop volumineux (2 Mo maximum)"] } };
     const buf = Buffer.from(await f.arrayBuffer());
     if (!sniffDocumentType(buf)) return { ok: false, errors: { [key]: ["Format accepté : JPEG, PNG, WebP ou PDF"] } };
     files.push(buf);

@@ -77,7 +77,7 @@ export async function uploadPhotoAction(_prev: FormState, fd: FormData): Promise
 
   const file = fd.get("photo");
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Sélectionnez une image." };
-  if (file.size > MAX_PHOTO_BYTES) return { ok: false, message: "Image trop volumineuse (5 Mo maximum)." };
+  if (file.size > MAX_PHOTO_BYTES) return { ok: false, message: "Image trop volumineuse (4 Mo maximum)." };
   const buf = Buffer.from(await file.arrayBuffer());
   if (!sniffImageType(buf)) return { ok: false, message: "Format non accepté. Utilisez JPEG, PNG ou WebP." };
 

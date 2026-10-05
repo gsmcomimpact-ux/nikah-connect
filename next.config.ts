@@ -33,8 +33,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ["sharp", "bcryptjs"],
   experimental: {
-    // Les photos et pièces d'identité transitent par des Server Actions.
-    serverActions: { bodySizeLimit: "9mb" },
+    // Photos et pièces d'identité transitent par des Server Actions (4,5 Mo = limite des fonctions Vercel).
+    serverActions: { bodySizeLimit: "4.5mb" },
   },
   async headers() {
     return [

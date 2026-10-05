@@ -88,6 +88,9 @@ async function main() {
   console.log("→ Super-administrateur");
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@nikah-connect.local").toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMoi-Admin-2026";
+  if ((process.env.VERCEL || process.env.NODE_ENV === "production") && (!process.env.SEED_ADMIN_PASSWORD || adminPassword.length < 12)) {
+    throw new Error("Définissez SEED_ADMIN_PASSWORD (12 caractères minimum) avant d'initialiser une base de production.");
+  }
   const adminHash = await bcrypt.hash(adminPassword, 12);
   const admin = await db.user.upsert({
     where: { email: adminEmail },

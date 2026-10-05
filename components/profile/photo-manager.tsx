@@ -4,6 +4,7 @@ import { useActionState, useTransition } from "react";
 import { Star, Trash2 } from "lucide-react";
 import { deletePhotoAction, setPrimaryPhotoAction, uploadPhotoAction } from "@/lib/actions/profile";
 import { initialFormState } from "@/lib/validation/form";
+import { compressInputFile } from "@/lib/client/compress-image";
 import { Badge } from "@/components/ui/badge";
 import { FormMessage } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -41,12 +42,12 @@ export function PhotoManager({ photos }: { photos: PhotoItem[] }) {
         <label htmlFor="photo" className="sr-only">
           Choisir une photo
         </label>
-        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required className="flex-1 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary" />
+        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required onChange={(e) => void compressInputFile(e.currentTarget)} className="flex-1 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary" />
         <SubmitButton size="sm" pendingText="Envoi…">
           Ajouter la photo
         </SubmitButton>
       </form>
-      <p className="text-xs text-gray-500">JPEG, PNG ou WebP, 5 Mo max. Photos pudiques uniquement, validées par la modération. Les métadonnées (dont la localisation GPS) sont automatiquement supprimées.</p>
+      <p className="text-xs text-gray-500">JPEG, PNG ou WebP (compressée automatiquement). Photos pudiques uniquement, validées par la modération. Les métadonnées (dont la localisation GPS) sont automatiquement supprimées.</p>
     </div>
   );
 }

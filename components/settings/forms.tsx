@@ -6,6 +6,7 @@ import { Checkbox, Field, Input, RadioCards, Select } from "@/components/ui/fiel
 import { SubmitButton } from "@/components/ui/submit-button";
 import { changePasswordAction, deleteAccountAction, sendPhoneCodeAction, submitIdentityAction, verifyPhoneCodeAction } from "@/lib/actions/account";
 import { saveTrustedContactAction, updatePrivacyAction } from "@/lib/actions/profile";
+import { compressInputFile } from "@/lib/client/compress-image";
 import { photoVisibilityOptions, trustedContactRelationOptions } from "@/lib/constants/options";
 
 export function PrivacyForm({ defaults }: { defaults: { photoVisibility: PhotoVisibility; isVisible: boolean; emailNotifications: boolean } }) {
@@ -93,11 +94,11 @@ export function IdentityForm() {
               ]}
             />
           </Field>
-          <Field label="Photo du document" htmlFor="document" error={s.errors?.document} hint="JPEG, PNG, WebP ou PDF — 8 Mo max.">
-            <Input id="document" name="document" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required />
+          <Field label="Photo du document" htmlFor="document" error={s.errors?.document} hint="Photo (compressée automatiquement) ou PDF de 2 Mo maximum.">
+            <Input id="document" name="document" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" required onChange={(e) => void compressInputFile(e.currentTarget)} />
           </Field>
           <Field label="Selfie tenant le document" htmlFor="selfie" error={s.errors?.selfie} hint="Permet de vérifier que le document vous appartient.">
-            <Input id="selfie" name="selfie" type="file" accept="image/jpeg,image/png,image/webp" required />
+            <Input id="selfie" name="selfie" type="file" accept="image/jpeg,image/png,image/webp" required onChange={(e) => void compressInputFile(e.currentTarget)} />
           </Field>
           <SubmitButton pendingText="Envoi sécurisé…">Envoyer pour vérification</SubmitButton>
         </>

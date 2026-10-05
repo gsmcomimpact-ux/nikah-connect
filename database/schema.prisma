@@ -790,3 +790,12 @@ model RateLimit {
   @@index([windowStart])
   @@map("rate_limits")
 }
+
+// Stockage des fichiers en base (utilisé sur les hébergeurs sans disque persistant, ex. Vercel).
+model StoredFile {
+  key       String   @id
+  data      Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("stored_files")
+}

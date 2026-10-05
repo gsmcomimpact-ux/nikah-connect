@@ -21,6 +21,8 @@ export const env = {
   ipHashSecret: read("IP_HASH_SECRET", isProd ? undefined : "dev-ip-hash-secret"),
   documentEncryptionKey: read("DOCUMENT_ENCRYPTION_KEY", isProd ? undefined : "0".repeat(64)),
   storageDir: read("STORAGE_DIR", "./storage"),
+  /** "local" (disque) ou "database" (PostgreSQL). Par défaut "database" sur Vercel, dont le disque n'est pas persistant. */
+  storageDriver: read("STORAGE_DRIVER", process.env.VERCEL ? "database" : "local") as "local" | "database",
   email: {
     provider: read("EMAIL_PROVIDER", "console") as "console" | "resend",
     from: read("EMAIL_FROM", "NIKAH CONNECT <no-reply@example.com>"),

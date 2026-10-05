@@ -115,6 +115,9 @@ Créés par `npm run db:seed`. **Tous les profils sont fictifs** (`is_demo = tru
 
 ## Déploiement
 
+### Option 0 — Vercel (recommandé pour démarrer)
+Voir le guide pas à pas : [`docs/DEPLOIEMENT-VERCEL.md`](docs/DEPLOIEMENT-VERCEL.md).
+
 ### Option A — Docker (serveur VPS)
 ```bash
 cp .env.example .env     # renseigner APP_URL, NEXT_PUBLIC_APP_URL, secrets, POSTGRES_PASSWORD

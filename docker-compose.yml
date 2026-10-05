@@ -1,0 +1,38 @@
+# Déploiement simple : application + PostgreSQL + volume de stockage privé.
+# Usage : cp .env.example .env (puis remplir) && docker compose up -d --build
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nikah_connect
+      POSTGRES_USER: nikah
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définissez POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nikah -d nikah_connect"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://nikah:${POSTGRES_PASSWORD}@db:5432/nikah_connect?schema=public
+      STORAGE_DIR: /data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - storage:/data/storage
+
+volumes:
+  pgdata:
+  storage:

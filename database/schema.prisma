@@ -1,0 +1,792 @@
+// =====================================================================
+//  NIKAH CONNECT — schéma de base de données (PostgreSQL)
+//  Les noms de tables sont en snake_case via @@map.
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+//  Énumérations
+// ---------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  DELETED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum MaritalStatus {
+  SINGLE
+  DIVORCED
+  WIDOWED
+}
+
+enum EducationLevel {
+  NONE
+  PRIMARY
+  SECONDARY
+  VOCATIONAL
+  BACHELOR
+  MASTER
+  DOCTORATE
+}
+
+enum ReligionImportance {
+  ESSENTIAL
+  VERY_IMPORTANT
+  IMPORTANT
+  MODERATE
+  PREFER_NOT_SAY
+}
+
+enum ReligiousPractice {
+  REGULAR
+  MODERATE
+  LEARNING
+  PREFER_NOT_SAY
+}
+
+enum CompatibilityImportance {
+  ESSENTIAL
+  IMPORTANT
+  FLEXIBLE
+}
+
+enum ChildrenWish {
+  YES
+  NO
+  OPEN
+}
+
+enum PartnerChildrenAcceptance {
+  YES
+  NO
+  DEPENDS
+}
+
+enum RelocationPreference {
+  STAY_IN_COUNTRY
+  OPEN_TO_ABROAD
+  PREFER_ABROAD
+  FLEXIBLE
+}
+
+enum MarriageTimeline {
+  WITHIN_6_MONTHS
+  WITHIN_1_YEAR
+  WITHIN_2_YEARS
+  NO_RUSH
+}
+
+enum PhotoVisibility {
+  MEMBERS
+  MATCHES_ONLY
+  HIDDEN
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  PHONE_OTP
+}
+
+enum LikeType {
+  INTEREST
+  PASS
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum MatchStatus {
+  ACTIVE
+  ENDED
+}
+
+enum MessageStatus {
+  VISIBLE
+  HIDDEN
+}
+
+enum NotificationType {
+  NEW_COMPATIBILITY
+  REQUEST_RECEIVED
+  REQUEST_ACCEPTED
+  NEW_MESSAGE
+  PROFILE_VERIFIED
+  VERIFICATION_REJECTED
+  REPORT_HANDLED
+  SECURITY_ALERT
+  SYSTEM
+}
+
+enum ReportReason {
+  FAKE_PROFILE
+  DISRESPECT
+  HARASSMENT
+  SPAM
+  INAPPROPRIATE_CONTENT
+  SCAM
+  MONEY_REQUEST
+  FRAUD
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum ReportSource {
+  USER
+  SYSTEM
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TrustedContactRelation {
+  PARENT
+  FAMILY_MEMBER
+  GUARDIAN
+  CHOSEN_COMPANION
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum BlogCategory {
+  PREPARER_MARIAGE
+  COMPATIBILITE
+  COMMUNICATION
+  FAMILLE
+  VIE_CONJUGALE
+  SECURITE_EN_LIGNE
+  RENCONTRES_MUSULMANES
+}
+
+enum AdminRole {
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+// ---------------------------------------------------------------------
+//  Comptes & authentification
+// ---------------------------------------------------------------------
+
+model User {
+  id                 String     @id @default(cuid())
+  email              String     @unique
+  phone              String?    @unique
+  passwordHash       String     @map("password_hash")
+  status             UserStatus @default(ACTIVE)
+  emailVerifiedAt    DateTime?  @map("email_verified_at")
+  phoneVerifiedAt    DateTime?  @map("phone_verified_at")
+  identityVerifiedAt DateTime?  @map("identity_verified_at")
+  onboardingStep     Int        @default(2) @map("onboarding_step") // 6 = terminé
+  emailNotifications Boolean    @default(true) @map("email_notifications")
+  failedLoginCount   Int        @default(0) @map("failed_login_count")
+  lockedUntil        DateTime?  @map("locked_until")
+  suspendedUntil     DateTime?  @map("suspended_until")
+  suspensionReason   String?    @map("suspension_reason")
+  signupIpHash       String?    @map("signup_ip_hash")
+  termsAcceptedAt    DateTime?  @map("terms_accepted_at")
+  isDemo             Boolean    @default(false) @map("is_demo")
+  lastActiveAt       DateTime?  @map("last_active_at")
+  deletedAt          DateTime?  @map("deleted_at")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  profile              Profile?
+  preference           Preference?
+  sessions             Session[]
+  tokens               VerificationToken[]
+  photos               Photo[]
+  likesSent            Like[]                @relation("LikeFrom")
+  likesReceived        Like[]                @relation("LikeTo")
+  matchesA             Match[]               @relation("MatchA")
+  matchesB             Match[]               @relation("MatchB")
+  participations       ConversationParticipant[]
+  messages             Message[]
+  notifications        Notification[]
+  reportsMade          Report[]              @relation("ReportReporter")
+  reportsReceived      Report[]              @relation("ReportReported")
+  reportsHandled       Report[]              @relation("ReportHandler")
+  blocksMade           Block[]               @relation("BlockBlocker")
+  blocksReceived       Block[]               @relation("BlockBlocked")
+  favorites            Favorite[]            @relation("FavoriteOwner")
+  favoritedBy          Favorite[]            @relation("FavoriteTarget")
+  profileViewsMade     ProfileView[]         @relation("ViewViewer")
+  profileViewsReceived ProfileView[]         @relation("ViewViewed")
+  verificationRequests VerificationRequest[] @relation("VerificationOwner")
+  verificationsHandled VerificationRequest[] @relation("VerificationReviewer")
+  trustedContact       TrustedContact?
+  subscription         Subscription?
+  payments             Payment[]
+  adminUser            AdminUser?
+  auditLogs            AuditLog[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([lastActiveAt])
+  @@index([signupIpHash])
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @unique @map("token_hash")
+  userAgent  String?  @map("user_agent")
+  ipHash     String?  @map("ip_hash")
+  expiresAt  DateTime @map("expires_at")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  type      TokenType
+  tokenHash String    @unique @map("token_hash")
+  target    String? // e-mail ou téléphone ciblé
+  attempts  Int       @default(0)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("verification_tokens")
+}
+
+// ---------------------------------------------------------------------
+//  Profils
+// ---------------------------------------------------------------------
+
+model Profile {
+  userId                  String                     @id @map("user_id")
+  displayName             String                     @map("display_name")
+  gender                  Gender
+  dateOfBirth             DateTime                   @map("date_of_birth") @db.Date
+  country                 String // code ISO 3166-1 alpha-2
+  city                    String
+  latitude                Float?
+  longitude               Float?
+  maritalStatus           MaritalStatus?             @map("marital_status")
+  childrenCount           Int                        @default(0) @map("children_count")
+  profession              String?
+  educationLevel          EducationLevel?            @map("education_level")
+  languages               String[]
+  bio                     String?
+  religionImportance      ReligionImportance?        @map("religion_importance")
+  religiousPractice       ReligiousPractice?         @map("religious_practice")
+  values                  String[]
+  marriageVision          String?                    @map("marriage_vision")
+  religiousCompatibility  CompatibilityImportance?   @map("religious_compatibility")
+  seeksMarriage           Boolean                    @default(true) @map("seeks_marriage")
+  wantsChildren           ChildrenWish?              @map("wants_children")
+  acceptsPartnerChildren  PartnerChildrenAcceptance? @map("accepts_partner_children")
+  relocation              RelocationPreference?
+  marriageTimeline        MarriageTimeline?          @map("marriage_timeline")
+  familyVision            String?                    @map("family_vision")
+  familyValues            String[]                   @map("family_values")
+  photoVisibility         PhotoVisibility            @default(MEMBERS) @map("photo_visibility")
+  isVisible               Boolean                    @default(true) @map("is_visible")
+  completeness            Int                        @default(0)
+  boostedUntil            DateTime?                  @map("boosted_until")
+  createdAt               DateTime                   @default(now()) @map("created_at")
+  updatedAt               DateTime                   @updatedAt @map("updated_at")
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interests ProfileInterest[]
+
+  @@index([gender, isVisible, dateOfBirth])
+  @@index([gender, country, city])
+  @@index([country, city])
+  @@index([maritalStatus])
+  @@index([educationLevel])
+  @@index([languages], type: Gin)
+  @@index([values], type: Gin)
+  @@map("profiles")
+}
+
+model Photo {
+  id         String           @id @default(cuid())
+  userId     String           @map("user_id")
+  storageKey String           @unique @map("storage_key")
+  width      Int
+  height     Int
+  isPrimary  Boolean          @default(false) @map("is_primary")
+  status     ModerationStatus @default(PENDING)
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("photos")
+}
+
+model Preference {
+  userId               String                     @id @map("user_id")
+  ageMin               Int                        @default(18) @map("age_min")
+  ageMax               Int                        @default(60) @map("age_max")
+  countries            String[]
+  cities               String[]
+  maxDistanceKm        Int?                       @map("max_distance_km")
+  maritalStatuses      MaritalStatus[]            @map("marital_statuses")
+  acceptsChildren      PartnerChildrenAcceptance? @map("accepts_children")
+  minEducation         EducationLevel?            @map("min_education")
+  languages            String[]
+  religionImportances  ReligionImportance[]       @map("religion_importances")
+  wantsChildren        ChildrenWish?              @map("wants_children")
+  relocation           RelocationPreference?
+  verifiedOnly         Boolean                    @default(false) @map("verified_only")
+  updatedAt            DateTime                   @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("preferences")
+}
+
+model Interest {
+  id       String            @id @default(cuid())
+  slug     String            @unique
+  label    String
+  category String
+  profiles ProfileInterest[]
+
+  @@map("interests")
+}
+
+model ProfileInterest {
+  profileId  String @map("profile_id")
+  interestId String @map("interest_id")
+
+  profile  Profile  @relation(fields: [profileId], references: [userId], onDelete: Cascade)
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, interestId])
+  @@index([interestId])
+  @@map("profile_interests")
+}
+
+// ---------------------------------------------------------------------
+//  Demandes, compatibilités mutuelles
+// ---------------------------------------------------------------------
+
+model Like {
+  id         String        @id @default(cuid())
+  fromUserId String        @map("from_user_id")
+  toUserId   String        @map("to_user_id")
+  type       LikeType
+  status     RequestStatus @default(PENDING)
+  note       String? // message d'accompagnement facultatif d'une demande
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  fromUser User @relation("LikeFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("LikeTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId, type, status])
+  @@index([fromUserId, createdAt])
+  @@map("likes")
+}
+
+model Match {
+  id        String      @id @default(cuid())
+  userAId   String      @map("user_a_id") // userAId < userBId (ordre lexical)
+  userBId   String      @map("user_b_id")
+  score     Int         @default(0)
+  status    MatchStatus @default(ACTIVE)
+  createdAt DateTime    @default(now()) @map("created_at")
+  endedAt   DateTime?   @map("ended_at")
+
+  userA        User          @relation("MatchA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB        User          @relation("MatchB", fields: [userBId], references: [id], onDelete: Cascade)
+  conversation Conversation?
+
+  @@unique([userAId, userBId])
+  @@index([userBId])
+  @@map("matches")
+}
+
+// ---------------------------------------------------------------------
+//  Messagerie
+// ---------------------------------------------------------------------
+
+model Conversation {
+  id            String   @id @default(cuid())
+  matchId       String?  @unique @map("match_id")
+  lastMessageAt DateTime @default(now()) @map("last_message_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  match        Match?                    @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String    @map("conversation_id")
+  userId         String    @map("user_id")
+  lastReadAt     DateTime? @map("last_read_at")
+  deletedAt      DateTime? @map("deleted_at") // suppression côté utilisateur uniquement
+  joinedAt       DateTime  @default(now()) @map("joined_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String        @map("conversation_id")
+  senderId       String?       @map("sender_id") // null = message système
+  body           String
+  status         MessageStatus @default(VISIBLE)
+  flagged        Boolean       @default(false)
+  flagReasons    String[]      @map("flag_reasons")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  conversation Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?               @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  attachments  MessageAttachment[]
+  reports      Report[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([flagged])
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id         String   @id @default(cuid())
+  messageId  String   @map("message_id")
+  storageKey String   @unique @map("storage_key")
+  mimeType   String   @map("mime_type")
+  sizeBytes  Int      @map("size_bytes")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_attachments")
+}
+
+// ---------------------------------------------------------------------
+//  Notifications
+// ---------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------
+//  Sécurité communautaire : signalements, blocages, favoris, vues
+// ---------------------------------------------------------------------
+
+model Report {
+  id             String       @id @default(cuid())
+  reporterId     String?      @map("reporter_id") // null = signalement automatique
+  reportedUserId String       @map("reported_user_id")
+  messageId      String?      @map("message_id")
+  reason         ReportReason
+  details        String?
+  source         ReportSource @default(USER)
+  status         ReportStatus @default(OPEN)
+  resolution     String?
+  handledById    String?      @map("handled_by_id")
+  handledAt      DateTime?    @map("handled_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  reporter     User?    @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reportedUser User     @relation("ReportReported", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  handledBy    User?    @relation("ReportHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  message      Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reportedUserId])
+  @@map("reports")
+}
+
+model Block {
+  blockerId String   @map("blocker_id")
+  blockedId String   @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("BlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+model Favorite {
+  userId    String   @map("user_id")
+  targetId  String   @map("target_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User @relation("FavoriteOwner", fields: [userId], references: [id], onDelete: Cascade)
+  target User @relation("FavoriteTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([userId, targetId])
+  @@map("favorites")
+}
+
+model ProfileView {
+  id        String   @id @default(cuid())
+  viewerId  String   @map("viewer_id")
+  viewedId  String   @map("viewed_id")
+  day       DateTime @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+
+  viewer User @relation("ViewViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+  viewed User @relation("ViewViewed", fields: [viewedId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, viewedId, day])
+  @@index([viewedId, createdAt])
+  @@map("profile_views")
+}
+
+// ---------------------------------------------------------------------
+//  Vérification d'identité & personne de confiance (wali)
+// ---------------------------------------------------------------------
+
+model VerificationRequest {
+  id              String             @id @default(cuid())
+  userId          String             @map("user_id")
+  documentType    String             @map("document_type")
+  documentKey     String?            @map("document_key") // fichier chiffré ; supprimé après décision
+  selfieKey       String?            @map("selfie_key")
+  status          VerificationStatus @default(PENDING)
+  rejectionReason String?            @map("rejection_reason")
+  reviewedById    String?            @map("reviewed_by_id")
+  reviewedAt      DateTime?          @map("reviewed_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+
+  user       User  @relation("VerificationOwner", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("VerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("verification_requests")
+}
+
+model TrustedContact {
+  id            String                 @id @default(cuid())
+  userId        String                 @unique @map("user_id")
+  name          String
+  relation      TrustedContactRelation
+  email         String?
+  phone         String?
+  showIndicator Boolean                @default(true) @map("show_indicator") // afficher « souhaite impliquer une personne de confiance »
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trusted_contacts")
+}
+
+// ---------------------------------------------------------------------
+//  Abonnements & paiements
+// ---------------------------------------------------------------------
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String             @unique @map("user_id")
+  plan                   Plan               @default(FREE)
+  status                 SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd       DateTime?          @map("current_period_end")
+  provider               String?
+  providerCustomerId     String?            @map("provider_customer_id")
+  providerSubscriptionId String?            @unique @map("provider_subscription_id")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([plan, status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String?       @map("user_id")
+  subscriptionId String?       @map("subscription_id")
+  amountCents    Int           @map("amount_cents")
+  currency       String
+  status         PaymentStatus @default(PENDING)
+  provider       String
+  providerRef    String?       @unique @map("provider_ref")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------
+//  Contenu éditorial
+// ---------------------------------------------------------------------
+
+model BlogPost {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  title          String
+  excerpt        String
+  content        String // Markdown simplifié
+  category       BlogCategory
+  authorName     String       @map("author_name")
+  readingMinutes Int          @default(4) @map("reading_minutes")
+  seoTitle       String?      @map("seo_title")
+  seoDescription String?      @map("seo_description")
+  published      Boolean      @default(false)
+  publishedAt    DateTime?    @map("published_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([published, publishedAt])
+  @@index([category, published])
+  @@map("blog_posts")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  body      String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([handled, createdAt])
+  @@map("contact_messages")
+}
+
+// ---------------------------------------------------------------------
+//  Administration, journalisation, paramètres, limitation de débit
+// ---------------------------------------------------------------------
+
+model AdminUser {
+  id          String    @id @default(cuid())
+  userId      String    @unique @map("user_id")
+  role        AdminRole @default(MODERATOR)
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  metadata   Json?
+  ipHash     String?  @map("ip_hash")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime @map("window_start")
+
+  @@index([windowStart])
+  @@map("rate_limits")
+}

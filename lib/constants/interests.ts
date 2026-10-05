@@ -1,0 +1,23 @@
+/** Centres d'intérêt proposés (insérés en base par le seed ; les membres peuvent aussi en ajouter). */
+export const DEFAULT_INTERESTS: { slug: string; label: string; category: string }[] = [
+  { slug: "lecture", label: "Lecture", category: "Culture" },
+  { slug: "coran", label: "Étude du Coran", category: "Spiritualité" },
+  { slug: "sciences-islamiques", label: "Sciences islamiques", category: "Spiritualité" },
+  { slug: "benevolat", label: "Bénévolat", category: "Engagement" },
+  { slug: "voyages", label: "Voyages", category: "Loisirs" },
+  { slug: "cuisine", label: "Cuisine", category: "Loisirs" },
+  { slug: "sport", label: "Sport", category: "Bien-être" },
+  { slug: "randonnee", label: "Randonnée / nature", category: "Bien-être" },
+  { slug: "calligraphie", label: "Calligraphie", category: "Culture" },
+  { slug: "histoire", label: "Histoire", category: "Culture" },
+  { slug: "entrepreneuriat", label: "Entrepreneuriat", category: "Professionnel" },
+  { slug: "technologie", label: "Technologie", category: "Professionnel" },
+  { slug: "langues", label: "Apprentissage des langues", category: "Culture" },
+  { slug: "jardinage", label: "Jardinage", category: "Loisirs" },
+  { slug: "photographie", label: "Photographie", category: "Loisirs" },
+  { slug: "education", label: "Éducation des enfants", category: "Famille" },
+  { slug: "artisanat", label: "Artisanat", category: "Loisirs" },
+  { slug: "poesie", label: "Poésie", category: "Culture" },
+  { slug: "football", label: "Football", category: "Bien-être" },
+  { slug: "couture", label: "Couture", category: "Loisirs" },
+];

@@ -3,6 +3,15 @@
 # 1. Génère le client Prisma  2. Applique les migrations  3. (option) données initiales  4. Build Next.js
 set -e
 
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERREUR : DATABASE_URL n'est pas définie. Créez/reliez une base Postgres (Storage › Neon) ou ajoutez DATABASE_URL dans Settings › Environment Variables, puis redéployez." >&2
+  exit 1
+fi
+for v in IP_HASH_SECRET DOCUMENT_ENCRYPTION_KEY APP_URL NEXT_PUBLIC_APP_URL; do
+  eval "val=\$$v"
+  [ -z "$val" ] && echo "ATTENTION : $v n'est pas définie (voir docs/DEPLOIEMENT-VERCEL.md). Le site ne fonctionnera pas correctement sans elle." >&2
+done
+
 npx prisma generate
 
 # Les migrations utilisent une connexion directe si elle est fournie (ex. intégration Neon : DATABASE_URL_UNPOOLED).

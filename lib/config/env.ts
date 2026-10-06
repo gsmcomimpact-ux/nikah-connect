@@ -18,8 +18,14 @@ const isProd = process.env.NODE_ENV === "production";
 export const env = {
   isProd,
   appUrl: read("APP_URL", "http://localhost:3000").replace(/\/$/, ""),
-  ipHashSecret: read("IP_HASH_SECRET", isProd ? undefined : "dev-ip-hash-secret"),
-  documentEncryptionKey: read("DOCUMENT_ENCRYPTION_KEY", isProd ? undefined : "0".repeat(64)),
+  // Secrets lus à l'utilisation (et non au chargement) pour ne pas bloquer le build :
+  // une valeur manquante en production provoque une erreur explicite au moment où elle sert.
+  get ipHashSecret(): string {
+    return read("IP_HASH_SECRET", isProd ? undefined : "dev-ip-hash-secret");
+  },
+  get documentEncryptionKey(): string {
+    return read("DOCUMENT_ENCRYPTION_KEY", isProd ? undefined : "0".repeat(64));
+  },
   storageDir: read("STORAGE_DIR", "./storage"),
   /** "local" (disque) ou "database" (PostgreSQL). Par défaut "database" sur Vercel, dont le disque n'est pas persistant. */
   storageDriver: read("STORAGE_DRIVER", process.env.VERCEL ? "database" : "local") as "local" | "database",
